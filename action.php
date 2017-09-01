@@ -42,6 +42,25 @@ $graphData = $w->forcastGraphData($lat,$lon);
           hAxis: { minValue: 0, maxValue: 9 },
           curveType: 'function',
           pointSize: 5,
+          'backgroundColor': 'transparent',
+           hAxis: {
+            textStyle: {
+              color: "#dadfe0"
+            },
+            gridlines: {
+              color: "#dadfe0"
+            },
+            baselineColor: '#dadfe0'
+          },
+          vAxis: {
+            textStyle: {
+              color: "#dadfe0"
+            },
+            gridlines: {
+              color: "#dadfe0"
+            },
+            baselineColor: '#dadfe0'
+          },
         };
         
         var data = google.visualization.arrayToDataTable
