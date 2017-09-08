@@ -34,15 +34,15 @@ $graphData = $w->forcastGraphData($lat,$lon);
     <link href="assets/css/style.css" rel="stylesheet" type="text/css"/>
     <script type="text/javascript">
         google.charts.load("current", {packages:["corechart"]});
-      google.charts.setOnLoadCallback(drawChart);
-      function drawChart() {
+      google.charts.setOnLoadCallback(initialize);
+      function drawChart(chartIndex) {
         
         var options = {
           legend: 'none',
           hAxis: { minValue: 0, maxValue: 9 },
           curveType: 'function',
           pointSize: 5,
-          'backgroundColor': 'transparent',
+          backgroundColor: { fill:'transparent' },
            hAxis: {
             textStyle: {
               color: "#dadfe0"
@@ -70,33 +70,56 @@ $graphData = $w->forcastGraphData($lat,$lon);
           <?php }  ?> 
         ]);
 
-
-        var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
-        options.colors= ['#DF240F'];
-        chart.draw(data, options);
-        
-        var data1 = google.visualization.arrayToDataTable
+         var data1 = google.visualization.arrayToDataTable
             ([ ['Date', 'Humidity',],
           <?php foreach($graphData as $index=>$g){ ?>
           ['<?php echo date('D',strtotime($index)) ;?>', <?php echo $g['humidity']  ?>],
           <?php }  ?> 
         ]);
-            
-        var chart1 = new google.visualization.LineChart(document.getElementById('chart_div1'));
-        options.colors= ['#0E26DE'];
-        chart1.draw(data1, options);
-        
+
         var data2 = google.visualization.arrayToDataTable
             ([ ['Date', 'Clouds'],
           <?php foreach($graphData as $index=>$g){ ?>
           ['<?php echo date('D',strtotime($index)) ;?>', <?php echo $g['clouds']  ?>],
           <?php }  ?> 
         ]);
+
+        var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+
+        if( chartIndex == "0" ){
+          options.colors= ['#DF240F'];
+          chart.draw(data, options);  
+        } else if( chartIndex == "1" ){
+          options.colors= ['#0E26DE'];
+          chart.draw(data1, options);  
+        } else if( chartIndex == "2" ){
+          options.colors= ['#25E010'];
+          chart.draw(data2, options);  
+        }
+        
+        
+       
+            
+        /*var chart1 = new google.visualization.LineChart(document.getElementById('chart_div1'));
+        options.colors= ['#0E26DE'];
+        chart1.draw(data1, options);
+        
+        
         var chart2 = new google.visualization.LineChart(document.getElementById('chart_div2'));
         options.colors= ['#25E010'];
-        chart2.draw(data2, options);
+        chart2.draw(data2, options);*/
+      }
+      function initialize () {
+         $(".forecastGraphHeading span").click(function(){
+          $(".forecastGraphHeading span").removeClass("active");
+          $(this).addClass("active");
+          drawChart($(this).attr('data-count'));  
+         })
+        $(".forecastGraphHeading span:eq(0)").trigger("click");
+         
       }
       $(function(){
+        
          $(document).on('click', ".forecastLi",function(e){
              var elementIndex = $(".forecastLi").index(this);
              $(".forecastLi").removeClass('forecastLiActive');
@@ -147,8 +170,7 @@ $graphData = $w->forcastGraphData($lat,$lon);
                     </div>
                     <div class="rightCurrent">
                         
-                        <p>High&nbsp;&nbsp;:&nbsp;&nbsp;<?php echo $currentWeather->main->temp_max."&deg;" ?></p>
-                        <p>Low&nbsp;&nbsp;:&nbsp;&nbsp; <?php echo $currentWeather->main->temp_min."&deg;" ?></p>
+                      
                     </div>
                     <div class="currentDescription">
                         <?php echo $currentWeather->weather[0]->description;  ?>
@@ -166,20 +188,28 @@ $graphData = $w->forcastGraphData($lat,$lon);
           
     
     <div class="forecastContainer">
-        <h2>Forecast</h2>
+       
         <div class="forecastGraphContainer">
-        <div class="forecastGraph">
+        <div class="forecastGraphHeading">
+          <span class="active" data-count="0"><i class="wi wi-thermometer"></i></span>
+          <span data-count="1"><i class="wi wi-humidity"></i></span>
+          <span data-count="2"><i class="wi wi-cloudy"></i></span>
+        </div>
+        <div class="forecastGraph tempgraph">
+           
             <div id="chart_div" ></div>
         </div>
-        <div class="forecastGraph">
+        <!-- <div class="forecastGraph humiditygraph">
+            <h4>Humidity</h4>
             <div id="chart_div1"></div>
         </div>
-        <div class="forecastGraph">
+        <div class="forecastGraph cloudgraph">
+            <h4>Cloud</h4>
             <div id="chart_div2"></div>
-        </div>
-        
+        </div> -->
         </div>
         <div style="clear:both"></div>
+         <h2>Forecast</h2>
         <div class="forecastContainer">
             <ul class="forecastHeading">
             <?php if(count($forecasts)>0){ ?>
@@ -196,7 +226,8 @@ $graphData = $w->forcastGraphData($lat,$lon);
                                 
                         <?php foreach($fore as $cast ){ ?>
                         <li class="forecastSubLi">
-                            <div class="forecastSubLiHeading"><span class="foreTimeSpan"><?php echo date('h:i A',$cast->dt)  ?></span>
+                            <div class="forecastSubLiHeading"><span class="foreTimeSpan"><?php echo date('h:i A',$cast->dt)  ?></span> : 
+                            <span><?php echo $cast->weather[0]->description;  ?></span>
                             <img align="right" class="foreTimeImg" src="assets/icons/<?php echo $cast->weather[0]->icon;  ?>.png" title="<?php echo $cast->weather[0]->description;  ?>" alt="<?php echo $cast->weather[0]->description;  ?>"/>
                             <br class="spacer" />
                             </div>
@@ -206,11 +237,12 @@ $graphData = $w->forcastGraphData($lat,$lon);
                                         <div class="forecastTemp">
                                             <div class="leftForeSpan">
                                                 <i class="wi wi-thermometer"></i> <?php echo $w->_temperature($cast->main->temp,'c')."&deg;";  ?>
+
                                             </div>
                                             <div class="rightForeSpan">
                                                 <span>High : <?php echo $w->_temperature($cast->main->temp_max,'c')."&deg;";  ?></span>
                                                 <span>Low : <?php echo $w->_temperature($cast->main->temp_min,'c')."&deg;";  ?></span>
-                                                <span><?php echo $cast->weather[0]->description;  ?></span>
+                                                
                                             </div>
                                             <br class="spacer" />
                                         </div>
